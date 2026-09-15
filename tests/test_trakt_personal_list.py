@@ -5,22 +5,19 @@ from plextraktsync.trakt.TraktUserList import TraktUserList
 
 class FakePersonalList:
     """
-    Stands in for trakt.users.UserList, which has no __len__ and loads its
-    items lazily: _items stays None until the items property is read.
+    Stands in for trakt.users.UserList as it actually is in pytrakt 4.4.x:
+    _items is filled by UserList.get(), iteration reads it, and the class
+    defines neither __len__ nor an items property.
     """
 
     name = "My List"
     description = "a description"
 
     def __init__(self, items):
-        self._loaded = items
-        self._items = None
+        self._items = list(items)
 
-    @property
-    def items(self):
-        if self._items is None:
-            self._items = self._loaded
-        return self._items
+    def __iter__(self):
+        return self._items.__iter__()
 
 
 class FakeTraktApi:
@@ -58,7 +55,7 @@ def test_personal_list_is_downloaded(monkeypatch):
     assert items == {}
 
 
-def test_personal_list_reads_items_through_the_property(monkeypatch):
+def test_personal_list_counts_items_without_len(monkeypatch):
     """The lazy property is what populates _items, so reading it is required."""
     user_list = FakePersonalList([])
     monkeypatch.setattr(

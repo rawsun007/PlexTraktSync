@@ -105,9 +105,9 @@ class TraktUserList:
         if self.list_type == "personal" and self.username == username:
             # For user's personal lists, use the user's personal list endpoint
             user_list = trakt.get_personal_list(username, self.name)
-            # `items` is the property that loads them; `_items` is None until it is
-            # read, and the list object itself has no length.
-            items = user_list.items
+            # UserList has __iter__ but no __len__, so materialise it once and use
+            # that for both the count and the items.
+            items = list(user_list)
             self.logger.info(f"Downloaded private personal Trakt list '{user_list.name}' ({len(items)} items)")
             return user_list.description, self.build_dict_from_raw_items(items)
         elif not self.is_private:
